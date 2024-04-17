@@ -46,6 +46,13 @@ rds_client = boto3.client(
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
 )
 
+cloudfront_client = boto3.client(
+    "cloudfront",
+    region_name=AWS_REGION,
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+)
+
 
 def find_default_vpc():
     vpcs = ec2_client.describe_vpcs(Filters=[{"Name": "isDefault", "Values": ["true"]}])
@@ -171,7 +178,7 @@ def create_ec2_instance(ec2_client, security_group_id):
     
     cd home/ubuntu
     
-    git clone https://SathvikReddyKamidi:{GITHUB_PAT_TOKEN}@github.com/SathvikReddyKamidi/spring_final_project_20204.git repo
+    git clone https://hunkydoris:{GITHUB_PAT_TOKEN}@github.com/hunkydoris/cloud-security-spring-2024-ics.git repo
     echo "Installation and cloning complete."
     
     # cd repo
@@ -244,6 +251,63 @@ def main():
         print("EC2 Instance ID:", instance_id)
     else:
         print("EC2 Instance ID:", ec2_instance_id)
+
+    described_instance = ec2_client.describe_instances(InstanceIds=[ec2_instance_id])
+    public_dns = described_instance["Reservations"][0]["Instances"][0]["PublicDnsName"]
+
+    if public_dns:
+        print(f"Public IPv4 DNS: {public_dns}")
+    else:
+        print("No public IPv4 DNS assigned to the EC2 instance.")
+
+    distribution_config = {
+        "CallerReference": "my-distribution",
+        "Comment": "My CloudFront Distribution",
+        "Enabled": True,
+        "HttpVersion": "http2",
+        "Origins": {
+            "Quantity": 1,
+            "Items": [
+                {
+                    "Id": "my-origin",
+                    "DomainName": public_dns,
+                    "CustomOriginConfig": {
+                        "HTTPPort": 3000,
+                        "HTTPSPort": 3000,
+                        "OriginProtocolPolicy": "http-only",
+                    },
+                }
+            ],
+        },
+        "DefaultCacheBehavior": {
+            "TargetOriginId": "my-origin",
+            "ViewerProtocolPolicy": "allow-all",
+            "AllowedMethods": {
+                "Quantity": 7,
+                "Items": ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"],
+                "CachedMethods": {"Quantity": 2, "Items": ["GET", "HEAD"]},
+            },
+            "ForwardedValues": {
+                "QueryString": True,
+                "Cookies": {"Forward": "all"},
+                "Headers": {"Quantity": 1, "Items": ["*"]},
+            },
+            "MinTTL": 0,
+            "DefaultTTL": 0,
+            "MaxTTL": 0,
+        },
+        "ViewerCertificate": {"CloudFrontDefaultCertificate": True},
+    }
+
+    response = cloudfront_client.create_distribution(
+        DistributionConfig=distribution_config
+    )
+
+    distribution_id = response["Distribution"]["Id"]
+    distribution_domain_name = response["Distribution"]["DomainName"]
+
+    print(f"CloudFront Distribution ID: {distribution_id}")
+    print(f"CloudFront Domain Name: https://{distribution_domain_name}")
 
 
 if __name__ == "__main__":
