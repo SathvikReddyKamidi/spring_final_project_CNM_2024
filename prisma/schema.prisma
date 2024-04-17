@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator enums {
+  provider = "tsx ./prisma/enum-generator.ts"
+}
+
+model Admin {
+  id       String @id @default(uuid())
+  name     String
+  password String
+  email    String @unique
+
+  @@map("admin")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  name        String
+  email       String    @unique
+  password    String
+  dateOfBirth DateTime? @map("date_of_birth")
+  phoneNo     String?   @map("phone_no")
+  address     String?
+  role        Role      @default(CUSTOMER)
+  orders      Order[]
+  payments    Payment[]
+
+  @@map("user")
+}
+
+model IceCreamType {
+  id    String @id @default(uuid())
+  name  String
+  slug  String @unique
+  image String
+
+  maxScoops Int
+
+  @@map("ice_cream_type")
+}
+
+model IceCreamFlavour {
+  id    String @id @default(uuid())
+  name  String @unique
+  stock Int    @default(1)
+
+  price Float
+
+  @@map("ice_cream_flavour")
+}
+
+model IceCreamMixins {
+  id    String @id @default(uuid())
+  name  String @unique
+  stock Int    @default(1)
+
+  price Float
+
+  @@map("ice_cream_mixins")
+}
+
+model IceCreamOrder {
+  id     String @id @default(uuid())
+  amount Float
+
+  type       String
+  flavourIds String[]
+  mixinIds   String[]
+
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId String
+
+  @@map("ice_cream_order")
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  createdAt  DateTime    @default(now())
+  status     OrderStatus
+  type       OrderType   @default(PICKUP)
+  payment    Payment?
+  pickupTime DateTime?
+
+  icecreams IceCreamOrder[]
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String
+
+  @@map("order")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  createdAt     DateTime      @default(now())
+  amount        Float
+  paymentMethod PaymentMethod
+  address       String?
+
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  orderId String @unique
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId  String
+
+  @@map("payment")
+}
+
+enum OrderType {
+  DELIVERY
+  PICKUP
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+}
+
+enum OrderStatus {
+  PENDING
+  DELIVERED
+  READY
+  ORDER_PLACED
+  COMPLETED
+  CANCELLED
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
