@@ -19,5 +19,5 @@ INSTANCE_TYPE = "t2.micro"
 IMAGE_ID = "ami-080e1f13689e07408"
 
 # Github
-GITHUB_USERNAME = "hunkydoris"
-GITHUB_EMAIL = "gautam@thinkroman.com"
+GITHUB_USERNAME = "SathvikReddyKamidi"
+GITHUB_EMAIL = "kamidisathvikreddy65@gmail.com"
