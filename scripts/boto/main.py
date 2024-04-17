@@ -178,7 +178,7 @@ def create_ec2_instance(ec2_client, security_group_id):
     
     cd home/ubuntu
     
-    git clone https://hunkydoris:{GITHUB_PAT_TOKEN}@github.com/hunkydoris/cloud-security-spring-2024-ics.git repo
+    git clone https://SathvikReddyKamidi:{GITHUB_PAT_TOKEN}@github.com/SathvikReddyKamidi/spring_final_project_20204.git repo
     echo "Installation and cloning complete."
     
     # cd repo
